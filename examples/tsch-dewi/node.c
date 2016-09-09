@@ -43,6 +43,7 @@
 #include "net/netstack.h"
 #include "net/rime/rime.h"
 #include "net/mac/tsch/tsch.h"
+#include "net/mac/tsch/tsch-schedule.h"
 
 const linkaddr_t coordinator_addr =    { { 245, 29 } };
 const linkaddr_t destination_addr =    { { 245, 59 } };
@@ -75,21 +76,47 @@ PROCESS_THREAD(unicast_test_process, ev, data)
   PROCESS_BEGIN();
 
   tsch_set_coordinator(linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr));
+
   NETSTACK_MAC.on();
 
   unicast_open(&uc, 146, &unicast_callbacks);
 
-  while(1) {
+  while(!tsch_is_associated){
     static struct etimer et;
 
     etimer_set(&et, CLOCK_SECOND);
+
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+    printf("Waiting for association");
+  }
+
+  struct tsch_slotframe * current_slotframe =  tsch_schedule_get_slotframe_by_handle(0);
+  for(int i=1;i< TSCH_SCHEDULE_CONF_DEFAULT_LENGTH ; i++){
+    if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)){
+      tsch_schedule_add_link(current_slotframe,
+        LINK_OPTION_TX ,
+        LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+        i, 0);
+      }
+      else{
+        tsch_schedule_add_link(current_slotframe,
+          LINK_OPTION_RX ,
+          LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+          i, 0);
+        }
+      }
+
+  while(1) {
+    static struct etimer et;
+
+    etimer_set(&et, 1);
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
     packetbuf_copyfrom("Hello", 5);
 
     if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
-      printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
+      //printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
       unicast_send(&uc, &destination_addr);
     }
   }
