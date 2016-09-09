@@ -56,15 +56,15 @@ AUTOSTART_PROCESSES(&unicast_test_process);
 static void
 recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
-  printf("App: unicast message received from %u.%u\n",
-   from->u8[0], from->u8[1]);
+  // printf("App: unicast message received from %u.%u\n",
+  //  from->u8[0], from->u8[1]);
 }
 /*---------------------------------------------------------------------------*/
 static void
 sent_uc(struct unicast_conn *ptr, int status, int num_tx)
 {
-  printf("App: unicast message sent, status %u, num_tx %u\n",
-   status, num_tx);
+  // printf("App: unicast message sent, status %u, num_tx %u\n",
+  //  status, num_tx);
 }
 
 static const struct unicast_callbacks unicast_callbacks = { recv_uc, sent_uc };
@@ -87,7 +87,7 @@ PROCESS_THREAD(unicast_test_process, ev, data)
     etimer_set(&et, CLOCK_SECOND);
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-    printf("Waiting for association");
+    printf("Waiting for association\n");
   }
 
   struct tsch_slotframe * current_slotframe =  tsch_schedule_get_slotframe_by_handle(0);

@@ -79,7 +79,8 @@
 struct tsch_log_t {
   enum { tsch_log_tx,
          tsch_log_rx,
-         tsch_log_message
+         tsch_log_message,
+         tsch_log_link_info_rx
   } type;
   struct asn_t asn;
   struct tsch_link *link;
@@ -105,6 +106,11 @@ struct tsch_log_t {
       uint8_t sec_level;
       uint8_t drift_used;
     } rx;
+    struct {
+      int src;
+      uint16_t rssi;
+      uint16_t lqi;
+    } link_info_rx;
   };
 };
 

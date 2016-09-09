@@ -894,6 +894,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.sec_level = frame.aux_hdr.security_control.security_level;
               log->rx.estimated_drift = estimated_drift;
             );
+
+            TSCH_LOG_ADD(tsch_log_link_info_rx,
+              log->link_info_rx.src = TSCH_LOG_ID_FROM_LINKADDR((linkaddr_t*)&frame.src_addr);
+              log->link_info_rx.rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
+              log->link_info_rx.lqi = packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY);
+            );
           }
 
           /* Poll process for processing of pending input and logs */

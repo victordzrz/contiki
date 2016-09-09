@@ -106,14 +106,20 @@ tsch_log_process_pending(void)
         printf("\n");
         break;
       case tsch_log_rx:
-        printf("%s-%u-%u %u rx %d",
-            log->rx.is_unicast == 0 ? "bc" : "uc", log->rx.is_data, log->rx.sec_level,
-                log->rx.datalen,
-                log->rx.src);
-        if(log->rx.drift_used) {
-          printf(", dr %d", log->rx.drift);
-        }
-        printf(", edr %d\n", (int)log->rx.estimated_drift);
+        // printf("%s-%u-%u %u rx %d",
+        //     log->rx.is_unicast == 0 ? "bc" : "uc", log->rx.is_data, log->rx.sec_level,
+        //         log->rx.datalen,
+        //         log->rx.src);
+        // if(log->rx.drift_used) {
+        //   printf(", dr %d", log->rx.drift);
+        // }
+        // printf(", edr %d\n", (int)log->rx.estimated_drift);
+        break;
+      case tsch_log_link_info_rx:
+        printf("[%d] link info :  rssi: %i lqi: %i\n",
+            log->link_info_rx.src,
+            (int16_t)log->link_info_rx.rssi,
+            log->link_info_rx.lqi);
         break;
       case tsch_log_message:
         printf("%s\n", log->message);
