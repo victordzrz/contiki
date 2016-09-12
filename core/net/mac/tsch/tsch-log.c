@@ -50,6 +50,8 @@
 #include "net/mac/tsch/tsch-schedule.h"
 #include "net/mac/tsch/tsch-slot-operation.h"
 #include "lib/ringbufindex.h"
+#include "tsch-channel-stats.h"
+
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
@@ -88,10 +90,10 @@ tsch_log_process_pending(void)
       printf("TSCH: {asn-%x.%lx link-NULL} ", log->asn.ms1b, log->asn.ls4b);
     } else {
       struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(log->link->slotframe_handle);
-      printf("TSCH: {asn-%x.%lx link-%u-%u-%u-%u ch-%u} ",
-             log->asn.ms1b, log->asn.ls4b,
-             log->link->slotframe_handle, sf ? sf->size.val : 0, log->link->timeslot, log->link->channel_offset,
-             tsch_calculate_channel(&log->asn, log->link->channel_offset));
+      // printf("TSCH: {asn-%x.%lx link-%u-%u-%u-%u ch-%u} ",
+      //        log->asn.ms1b, log->asn.ls4b,
+      //        log->link->slotframe_handle, sf ? sf->size.val : 0, log->link->timeslot, log->link->channel_offset,
+      //        tsch_calculate_channel(&log->asn, log->link->channel_offset));
     }
     switch(log->type) {
       case tsch_log_tx:
@@ -105,21 +107,18 @@ tsch_log_process_pending(void)
         }
         printf("\n");
         break;
-      case tsch_log_rx:
-        // printf("%s-%u-%u %u rx %d",
-        //     log->rx.is_unicast == 0 ? "bc" : "uc", log->rx.is_data, log->rx.sec_level,
-        //         log->rx.datalen,
-        //         log->rx.src);
-        // if(log->rx.drift_used) {
-        //   printf(", dr %d", log->rx.drift);
-        // }
-        // printf(", edr %d\n", (int)log->rx.estimated_drift);
-        break;
+      // case tsch_log_rx:
+      //   printf("%s-%u-%u %u rx %d",
+      //        log->rx.is_unicast == 0 ? "bc" : "uc", log->rx.is_data, log->rx.sec_level,
+      //            log->rx.datalen,
+      //            log->rx.src);
+      //   if(log->rx.drift_used) {
+      //     printf(", dr %d", log->rx.drift);
+      //   }
+      //   printf(", edr %d\n", (int)log->rx.estimated_drift);
+      //   break;
       case tsch_log_link_info_rx:
-        printf("[%d] link info :  rssi: %i lqi: %i\n",
-            log->link_info_rx.src,
-            (int16_t)log->link_info_rx.rssi,
-            log->link_info_rx.lqi);
+        notify_rx(tsch_calculate_channel(&log->asn, log->link->channel_offset), (int16_t)log->link_info_rx.rssi, log->link_info_rx.lqi);
         break;
       case tsch_log_message:
         printf("%s\n", log->message);

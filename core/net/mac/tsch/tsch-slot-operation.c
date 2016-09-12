@@ -777,13 +777,16 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         static int header_len;
         static frame802154_t frame;
         radio_value_t radio_last_rssi;
+        radio_value_t radio_last_lqi;
 
         /* Read packet */
         current_input->len = NETSTACK_RADIO.read((void *)current_input->payload, TSCH_PACKET_MAX_LEN);
         NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &radio_last_rssi);
+        NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_LINK_QUALITY, &radio_last_lqi);
         current_input->rx_asn = current_asn;
         current_input->rssi = (signed)radio_last_rssi;
         current_input->channel = current_channel;
+        current_input->lqi= (uint16_t)radio_last_lqi;
         header_len = frame802154_parse((uint8_t *)current_input->payload, current_input->len, &frame);
         frame_valid = header_len > 0 &&
           frame802154_check_dest_panid(&frame) &&
@@ -897,8 +900,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
             TSCH_LOG_ADD(tsch_log_link_info_rx,
               log->link_info_rx.src = TSCH_LOG_ID_FROM_LINKADDR((linkaddr_t*)&frame.src_addr);
-              log->link_info_rx.rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
-              log->link_info_rx.lqi = packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY);
+              log->link_info_rx.rssi = current_input->rssi;
+              log->link_info_rx.lqi = current_input->lqi;
             );
           }
 

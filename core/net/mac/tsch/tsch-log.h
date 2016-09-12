@@ -108,7 +108,7 @@ struct tsch_log_t {
     } rx;
     struct {
       int src;
-      uint16_t rssi;
+      int16_t rssi;
       uint16_t lqi;
     } link_info_rx;
   };
