@@ -443,7 +443,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
     return 0;
   }
 #endif /* TSCH_JOIN_SECURED_ONLY */
-  
+
 #if LLSEC802154_ENABLED
   if(!tsch_security_parse_frame(input_eb->payload, hdrlen,
       input_eb->len - hdrlen - tsch_security_mic_len(&frame),
@@ -958,9 +958,9 @@ packet_input(void)
     }
 
     if(!duplicate) {
-      PRINTF("TSCH: received from %u with seqno %u\n",
-             TSCH_LOG_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)),
-             packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO));
+      // PRINTF("TSCH: received from %u with seqno %u\n",
+      //        TSCH_LOG_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)),
+      //        packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO));
       NETSTACK_LLSEC.input();
     }
   }

@@ -117,8 +117,11 @@ tsch_log_process_pending(void)
       //   }
       //   printf(", edr %d\n", (int)log->rx.estimated_drift);
       //   break;
-      case tsch_log_link_info_rx:
-        notify_rx(tsch_calculate_channel(&log->asn, log->link->channel_offset), (int16_t)log->link_info_rx.rssi, log->link_info_rx.lqi);
+      case tsch_log_rx_correct:
+        notify_rx_ok(log->rx_correct.src,log->rx_correct.channel, (int16_t)log->rx_correct.rssi, log->rx_correct.lqi);
+        break;
+      case tsch_log_rx_start:
+        notify_rx_slot(log->rx_start.src ,log->rx_start.channel);
         break;
       case tsch_log_message:
         printf("%s\n", log->message);

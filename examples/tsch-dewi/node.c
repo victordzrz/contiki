@@ -113,11 +113,13 @@ PROCESS_THREAD(unicast_test_process, ev, data)
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    packetbuf_copyfrom("Hello", 5);
+    if(tsch_is_associated){
+      packetbuf_copyfrom("Hello", 5);
 
-    if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
-      //printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
-      unicast_send(&uc, &destination_addr);
+      if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
+        //printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
+        unicast_send(&uc, &destination_addr);
+      }
     }
   }
 

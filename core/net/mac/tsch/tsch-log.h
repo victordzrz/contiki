@@ -80,7 +80,8 @@ struct tsch_log_t {
   enum { tsch_log_tx,
          tsch_log_rx,
          tsch_log_message,
-         tsch_log_link_info_rx
+         tsch_log_rx_correct,
+         tsch_log_rx_start
   } type;
   struct asn_t asn;
   struct tsch_link *link;
@@ -108,9 +109,14 @@ struct tsch_log_t {
     } rx;
     struct {
       int src;
+      uint8_t channel;
       int16_t rssi;
       uint16_t lqi;
-    } link_info_rx;
+    } rx_correct;
+    struct {
+      int src;
+      uint8_t channel;
+    } rx_start;
   };
 };
 

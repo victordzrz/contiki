@@ -750,6 +750,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     TSCH_DEBUG_RX_EVENT();
 
+    TSCH_LOG_ADD(tsch_log_rx_start,
+      log->rx_start.src = 0; //TO-DO FIND THE ID FROM THE Schedule?
+      log->rx_start.channel = current_channel;
+    );
+
     /* Start radio for at least guard time */
     tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
@@ -898,10 +903,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.estimated_drift = estimated_drift;
             );
 
-            TSCH_LOG_ADD(tsch_log_link_info_rx,
-              log->link_info_rx.src = TSCH_LOG_ID_FROM_LINKADDR((linkaddr_t*)&frame.src_addr);
-              log->link_info_rx.rssi = current_input->rssi;
-              log->link_info_rx.lqi = current_input->lqi;
+            TSCH_LOG_ADD(tsch_log_rx_correct,
+              log->rx_correct.src = TSCH_LOG_ID_FROM_LINKADDR((linkaddr_t*)&frame.src_addr);
+              log->rx_correct.channel = current_channel;
+              log->rx_correct.rssi = current_input->rssi;
+              log->rx_correct.lqi = current_input->lqi;
             );
           }
 

@@ -5,15 +5,17 @@
 
 void init_channel_stats(void);
 
-void notify_rx(uint8_t channel, int16_t rssi, uint16_t lqi);
+void notify_rx_ok(int src, uint8_t channel, int16_t rssi, uint16_t lqi);
+void notify_rx_slot(int src,uint8_t channel);
 
 struct channel_stats_t
 {
   uint8_t channel;
   double average_rssi;
   double average_lqi;
-  long int tx;
-  long int rx;
+  uint16_t tx;
+  uint16_t rx_total;
+  uint16_t rx;
 };
 
 #endif
