@@ -45,8 +45,12 @@
 #include "net/mac/tsch/tsch.h"
 #include "net/mac/tsch/tsch-schedule.h"
 
-const linkaddr_t coordinator_addr =    { { 245, 29 } };
-const linkaddr_t destination_addr =    { { 245, 59 } };
+const int number_of_nodes=3;
+const linkaddr_t coordinator_addr =    { { 0xF5, 0x1D } };
+const linkaddr_t node1_addr =    { { 0xF5, 0x3B } };
+const linkaddr_t node2_addr =    { { 0x84, 0xB0 } };
+const linkaddr_t node3_addr =    { { 0x85, 0xD2 } };
+
 
 /*---------------------------------------------------------------------------*/
 PROCESS(unicast_test_process, "Rime Node");
@@ -92,11 +96,25 @@ PROCESS_THREAD(unicast_test_process, ev, data)
 
   struct tsch_slotframe * current_slotframe =  tsch_schedule_get_slotframe_by_handle(0);
   for(int i=1;i< TSCH_SCHEDULE_CONF_DEFAULT_LENGTH ; i++){
-    if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)){
-      tsch_schedule_add_link(current_slotframe,
-        LINK_OPTION_TX ,
-        LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
-        i, 0);
+    if(!linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr)){
+      if(i%number_of_nodes==0 && linkaddr_cmp(&node1_addr, &linkaddr_node_addr)){
+        tsch_schedule_add_link(current_slotframe,
+          LINK_OPTION_TX ,
+          LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+          i, 0);
+        }
+      if(i%number_of_nodes==1 && linkaddr_cmp(&node2_addr, &linkaddr_node_addr)){
+        tsch_schedule_add_link(current_slotframe,
+          LINK_OPTION_TX ,
+          LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+          i, 0);
+        }
+      if(i%number_of_nodes==2 && linkaddr_cmp(&node3_addr, &linkaddr_node_addr)){
+        tsch_schedule_add_link(current_slotframe,
+          LINK_OPTION_TX ,
+          LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+          i, 0);
+        }
       }
       else{
         tsch_schedule_add_link(current_slotframe,
@@ -116,9 +134,9 @@ PROCESS_THREAD(unicast_test_process, ev, data)
     if(tsch_is_associated){
       packetbuf_copyfrom("Hello", 5);
 
-      if(!linkaddr_cmp(&destination_addr, &linkaddr_node_addr)) {
+      if(!linkaddr_cmp(&coordinator_addr, &linkaddr_node_addr) &&  tsch_queue_packet_count(&coordinator_addr)<4) {
         //printf("App: sending unicast message to %u.%u\n", destination_addr.u8[0], destination_addr.u8[1]);
-        unicast_send(&uc, &destination_addr);
+        unicast_send(&uc, &coordinator_addr);
       }
     }
   }

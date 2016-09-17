@@ -36,7 +36,8 @@ void notify_rx_ok(int src, uint8_t channel, int16_t rssi, uint16_t lqi){
     }
     int a_rssi=(int)current_channel_stats->average_rssi;
     int a_lqi=(int)current_channel_stats->average_lqi;
-    printf("%d\t%d\t%d\t%ld\t%ld\n",
+    printf("%x\t%d\t%d\t%d\t%ld\t%ld\n",
+    src,
     channel,
     a_rssi,
     a_lqi,
