@@ -50,8 +50,6 @@
 #include "net/mac/tsch/tsch-schedule.h"
 #include "net/mac/tsch/tsch-slot-operation.h"
 #include "lib/ringbufindex.h"
-#include "tsch-channel-stats.h"
-
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
@@ -107,21 +105,15 @@ tsch_log_process_pending(void)
         }
         printf("\n");
         break;
-      // case tsch_log_rx:
-      //   printf("%s-%u-%u %u rx %d",
-      //        log->rx.is_unicast == 0 ? "bc" : "uc", log->rx.is_data, log->rx.sec_level,
-      //            log->rx.datalen,
-      //            log->rx.src);
-      //   if(log->rx.drift_used) {
-      //     printf(", dr %d", log->rx.drift);
-      //   }
-      //   printf(", edr %d\n", (int)log->rx.estimated_drift);
-      //   break;
-      case tsch_log_rx_correct:
-        notify_rx_ok(log->rx_correct.src,log->rx_correct.channel, (int16_t)log->rx_correct.rssi, log->rx_correct.lqi);
-        break;
-      case tsch_log_rx_start:
-        notify_rx_slot(log->rx_start.src ,log->rx_start.channel);
+      case tsch_log_rx:
+        printf("%s-%u-%u %u rx %d",
+             log->rx.is_unicast == 0 ? "bc" : "uc", log->rx.is_data, log->rx.sec_level,
+                 log->rx.datalen,
+                 log->rx.src);
+        if(log->rx.drift_used) {
+          printf(", dr %d", log->rx.drift);
+        }
+        printf(", edr %d\n", (int)log->rx.estimated_drift);
         break;
       case tsch_log_message:
         printf("%s\n", log->message);

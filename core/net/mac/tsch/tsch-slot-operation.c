@@ -46,6 +46,7 @@
 #include "net/packetbuf.h"
 #include "net/queuebuf.h"
 #include "net/mac/framer-802154.h"
+#include "net/mac/channel-stats.h"
 #include "net/mac/tsch/tsch.h"
 #include "net/mac/tsch/tsch-slot-operation.h"
 #include "net/mac/tsch/tsch-queue.h"
@@ -468,6 +469,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   uint8_t in_queue;
   static int dequeued_index;
   static int packet_ready = 1;
+  static radio_value_t radio_last_rssi;
+  static radio_value_t radio_last_lqi;
 
   PT_BEGIN(pt);
 
@@ -493,6 +496,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* is this a broadcast packet? (wait for ack?) */
       static uint8_t is_broadcast;
       static rtimer_clock_t tx_start_time;
+
 
 #if CCA_ENABLED
       static uint8_t cca_status;
@@ -603,6 +607,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               /* Read ack frame */
               ack_len = NETSTACK_RADIO.read((void *)ackbuf, sizeof(ackbuf));
 
+              NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &radio_last_rssi);
+              NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_LINK_QUALITY, &radio_last_lqi);
+
               is_time_source = 0;
               /* The radio driver should return 0 if no valid packets are in the rx buffer */
               if(ack_len > 0) {
@@ -680,6 +687,24 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       ringbufindex_put(&dequeued_ringbuf);
     }
 
+    if(mac_tx_status==MAC_TX_OK){
+      channel_stats_tx(
+        TSCH_LOG_ID_FROM_LINKADDR(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER)),
+        current_channel,
+        (signed)radio_last_rssi,
+        (uint16_t)radio_last_lqi,
+        TX_OK
+      );
+    }else{
+      channel_stats_tx(
+        TSCH_LOG_ID_FROM_LINKADDR(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER)),
+        current_channel,
+        (signed)radio_last_rssi,
+        (uint16_t)radio_last_lqi,
+        TX_FAIL
+      );
+    }
+
     /* Log every tx attempt */
     TSCH_LOG_ADD(tsch_log_tx,
         log->tx.mac_tx_status = mac_tx_status;
@@ -750,11 +775,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     TSCH_DEBUG_RX_EVENT();
 
-    TSCH_LOG_ADD(tsch_log_rx_start,
-      log->rx_start.src = 0; //TO-DO FIND THE ID FROM THE Schedule?
-      log->rx_start.channel = current_channel;
-    );
-
     /* Start radio for at least guard time */
     tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
@@ -781,8 +801,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         static int frame_valid;
         static int header_len;
         static frame802154_t frame;
-        radio_value_t radio_last_rssi;
-        radio_value_t radio_last_lqi;
+        static radio_value_t radio_last_rssi;
+        static radio_value_t radio_last_lqi;
 
         /* Read packet */
         current_input->len = NETSTACK_RADIO.read((void *)current_input->payload, TSCH_PACKET_MAX_LEN);
@@ -903,12 +923,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.estimated_drift = estimated_drift;
             );
 
-            TSCH_LOG_ADD(tsch_log_rx_correct,
-              log->rx_correct.src = TSCH_LOG_ID_FROM_LINKADDR((linkaddr_t*)&frame.src_addr);
-              log->rx_correct.channel = current_channel;
-              log->rx_correct.rssi = current_input->rssi;
-              log->rx_correct.lqi = current_input->lqi;
-            );
+            channel_stats_rx(
+              TSCH_LOG_ID_FROM_LINKADDR((linkaddr_t*)&frame.src_addr),
+               current_channel,
+               current_input->rssi,
+               current_input->lqi
+             );
+
           }
 
           /* Poll process for processing of pending input and logs */
