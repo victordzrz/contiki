@@ -44,6 +44,7 @@
 #include "net/rime/rime.h"
 #include "net/mac/tsch/tsch.h"
 #include "net/mac/tsch/tsch-schedule.h"
+#include "net/mac/channel-stats.h"
 
 const int number_of_nodes=3;
 const linkaddr_t coordinator_addr =    { { 0xF5, 0x1D } };
@@ -54,7 +55,9 @@ const linkaddr_t node3_addr =    { { 0x85, 0xD2 } };
 
 /*---------------------------------------------------------------------------*/
 PROCESS(unicast_test_process, "Rime Node");
-AUTOSTART_PROCESSES(&unicast_test_process);
+PROCESS(print_channel_stats, "Print stats");
+AUTOSTART_PROCESSES(&unicast_test_process, &print_channel_stats);
+
 
 /*---------------------------------------------------------------------------*/
 static void
@@ -142,5 +145,47 @@ PROCESS_THREAD(unicast_test_process, ev, data)
   }
 
   PROCESS_END();
+}
+
+PROCESS_THREAD(print_channel_stats, ev, data){
+   PROCESS_BEGIN();
+   static struct etimer et2;
+   static struct channel_stats_t channel_stats_list[16];
+   static struct channel_info_t channel_dr[16];
+   static uint8_t channel_hopping_sequence[32];
+
+   init_channel_stats();
+
+   /* Delay 1 second */
+   etimer_set(&et2, CLOCK_SECOND);
+
+   while(1) {
+     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et2));
+     if(tsch_is_associated){
+       /* Reset the etimer to trig again in 1 second */
+       channel_stats_get_rssi(&channel_dr);
+       channel_stats_get_stats(&channel_stats_list);
+       for(int i=0;i<16;i++){
+         printf("[%d] DR:%d RSSI:%d\n", channel_stats_list[i].channel,calculate_dalivery_rate(channel_stats_list[i]),(int)channel_dr[i].value);
+       }
+       calculate_channel_hopping_sequence(&channel_hopping_sequence);
+       printf("[");
+       for(int i=0;i<32;i++){
+         printf("%d,",channel_hopping_sequence[i]);
+       }
+       printf("]\n");
+       /* ... */
+     }
+     etimer_reset(&et2);
+   }
+   PROCESS_END();
+}
+
+int calculate_dalivery_rate(struct channel_stats_t stats){
+  if(stats.tx_total==0 || stats.tx_ok==0){
+    return 0;
+  }else{
+    return (int)((((double)stats.tx_ok)/stats.tx_total)*1000);
+  }
 }
 /*---------------------------------------------------------------------------*/
