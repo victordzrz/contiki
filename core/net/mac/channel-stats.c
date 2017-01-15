@@ -5,7 +5,7 @@
 
 #define CHANNEL_NUMBER 16
 #define CHANNEL_HOPPING_SEQUENCE_LENGTH 32
-#define ALPHA 0.3f
+#define ALPHA 0.2f
 
 
 static struct channel_stats_t channel_stats_list[CHANNEL_NUMBER];
@@ -36,6 +36,10 @@ void channel_stats_tx(int dest,uint8_t channel, int16_t rssi, uint16_t lqi, int 
   if(tx_status==TX_OK){
     current_channel_stats->tx_ok++;
     add_record(current_channel_stats,rssi,lqi);
+    current_channel_stats->average_dr=1*ALPHA+(1-ALPHA)*current_channel_stats->average_dr;
+  }
+  else{
+    current_channel_stats->average_dr=0*ALPHA+(1-ALPHA)*current_channel_stats->average_dr;
   }
   // printf("TX %x\t%d\t%d\t%d\t%ld\t%ld\n",
   // dest,
@@ -83,12 +87,13 @@ void channel_stats_get_rssi(struct channel_info_t * buffer){
 
 void channel_stats_get_delivery_rate(struct channel_info_t * buffer){
   for(int i=0;i<CHANNEL_NUMBER;i++){
-    if(channel_stats_list[i].tx_total==0){
-      buffer[i].value=0;
-    }
-    else{
-      buffer[i].value=((double)channel_stats_list[i].tx_ok)/channel_stats_list[i].tx_total;
-    }
+    // if(channel_stats_list[i].tx_total==0){
+    //   buffer[i].value=0;
+    // }
+    // else{
+    //   buffer[i].value=((double)channel_stats_list[i].tx_ok)/channel_stats_list[i].tx_total;
+    // }
+    buffer[i].value=channel_stats_list[i].average_dr;
     buffer[i].channel=channel_stats_list[i].channel;
   }
 }

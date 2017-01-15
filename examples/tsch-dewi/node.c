@@ -47,7 +47,7 @@
 #include "net/mac/channel-stats.h"
 
 const int number_of_nodes=3;
-const linkaddr_t coordinator_addr =    { { 0xF5, 0x1D } };
+const linkaddr_t coordinator_addr =    { { 0x80, 0x31 } };
 const linkaddr_t node1_addr =    { { 0xF5, 0x3B } };
 const linkaddr_t node2_addr =    { { 0x84, 0xB0 } };
 const linkaddr_t node3_addr =    { { 0x85, 0xD2 } };
@@ -152,6 +152,7 @@ PROCESS_THREAD(print_channel_stats, ev, data){
    static struct etimer et2;
    static struct channel_stats_t channel_stats_list[16];
    static struct channel_info_t channel_dr[16];
+   static struct channel_info_t channel_rssi[16];
    static uint8_t channel_hopping_sequence[32];
 
    init_channel_stats();
@@ -163,17 +164,23 @@ PROCESS_THREAD(print_channel_stats, ev, data){
      PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et2));
      if(tsch_is_associated){
        /* Reset the etimer to trig again in 1 second */
-       channel_stats_get_rssi(&channel_dr);
+       channel_stats_get_rssi(&channel_rssi);
+       channel_stats_get_delivery_rate(&channel_dr);
        channel_stats_get_stats(&channel_stats_list);
        for(int i=0;i<16;i++){
-         printf("[%d] DR:%d RSSI:%d\n", channel_stats_list[i].channel,calculate_dalivery_rate(channel_stats_list[i]),(int)channel_dr[i].value);
-       }
+         printf("[%d] TXTOT:%d TXOK: %d RX:%d DR:%d RSSI:%d\n",
+          channel_stats_list[i].channel, 
+          channel_stats_list[i].tx_total,
+          channel_stats_list[i].tx_ok,
+          channel_stats_list[i].rx, 
+          (int)(channel_dr[i].value*1000),(int)channel_rssi[i].value);
+       } 
        calculate_channel_hopping_sequence(&channel_hopping_sequence);
-       printf("[");
-       for(int i=0;i<32;i++){
-         printf("%d,",channel_hopping_sequence[i]);
-       }
-       printf("]\n");
+       // printf("[");
+       // for(int i=0;i<32;i++){
+       //   printf("%d,",channel_hopping_sequence[i]);
+       // }
+       // printf("]\n");
        /* ... */
      }
      etimer_reset(&et2);

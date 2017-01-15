@@ -11,6 +11,7 @@ struct channel_stats_t
   uint8_t channel;
   double average_rssi;
   double average_lqi;
+  double average_dr;
   uint32_t sample_number;
   uint32_t tx_total;
   uint32_t tx_ok;
